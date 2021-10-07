@@ -1,4 +1,6 @@
-int x()
+#include <stddef.h>
+
+void *malloc(size_t size)
 {
-  return 1;
+  return (void *)0;
 }
