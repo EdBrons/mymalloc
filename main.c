@@ -1,6 +1,8 @@
 #include "my-malloc.c"
+#include <string.h>
 
 int main(int argc, char *argv[])
 {
-  return 0;
+  void * ptr = my_malloc(10);
+  memset(ptr, 0, 10);
 }
