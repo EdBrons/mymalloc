@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
+#include <limits.h>
 
 #define MIN_ALLOCATION 1000
 
@@ -31,9 +32,11 @@ int size_available(struct metadata *mdp1, struct metadata *mdp2) {
 
 struct metadata *get_metadata(void *ptr) {
   struct metadata *metadata_p = &Head;
-  while (metadata_p->data_addr != ptr && metadata_p != NULL) {
+  while (metadata_p->data_addr != ptr && metadata_p->next != NULL) {
     metadata_p = metadata_p->next;
   }
+  if (metadata_p != ptr)
+    return NULL;
   return metadata_p;
 }
 
@@ -113,9 +116,38 @@ void my_free(void *ptr) {
 }
 
 void *my_calloc(size_t nmemb, size_t size) {
-  return 0;
+  // check for overflow
+  if (INT_MAX / nmemb < size) {
+    // TODO: change out perror
+    fprintf(stderr, "my_calloc: integer overflow\n");
+    return NULL;
+  }
+
+  void * ptr = my_malloc(nmemb * size);
+  memset(ptr, 0, nmemb * size);
+  return ptr;
 }
 
 void *my_realloc(void *ptr, size_t size) {
-  return 0;
+  struct metadata *mdp = get_metadata(ptr);
+
+  if (mdp == NULL && size == 0) {
+    return NULL;
+  }
+  else if (mdp == NULL && size != 0) {
+    return my_malloc(size);
+  }
+  else if (mdp != NULL && size == 0) {
+    my_free(ptr);
+    return NULL;
+  }
+  
+  // TODO: this implemtation is slighly inefficent
+  void * new_ptr = my_malloc(size);
+  if (new_ptr == NULL) {
+    return NULL;
+  }
+  memcpy(new_ptr, ptr, size);
+  my_free(ptr);
+  return new_ptr;
 }

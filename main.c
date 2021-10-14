@@ -3,8 +3,7 @@
 
 int main(int argc, char *argv[])
 {
-  void * ptr1 = my_malloc(10);
-  int x = 100000;
-  void * ptr2 = my_malloc(x);
-  memset(ptr2, 0, x);
+  void * ptr = my_malloc(100);
+  my_realloc(ptr, 1000);
+  my_free(ptr);
 }
