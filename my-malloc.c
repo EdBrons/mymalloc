@@ -5,6 +5,8 @@
 
 #define MIN_ALLOCATION 1000
 
+struct metadata head;
+
 struct metadata {
   // addr of the data segment
   void *data_addr;
@@ -25,9 +27,16 @@ int size_available(struct metadata *mdp1, struct metadata *mdp2) {
   return (char *)mdp2 - (char *)mdp1 - sizeof(struct metadata);
 }
 
+struct metadata *get_metadata(void *ptr) {
+  struct metadata *metadata_p = &head;
+  while (metadata_p->data_addr != ptr && metadata_p != NULL) {
+    metadata_p = metadata_p->next;
+  }
+  return metadata_p;
+}
+
 void *my_malloc(size_t size) {
   static int first_run_flag = 1;
-  static struct metadata head;
 
   // if head not created, create it
   if (first_run_flag) {
@@ -56,8 +65,9 @@ void *my_malloc(size_t size) {
 
   // traverse list until suitable spot found
   struct metadata *metadata_p = &head;
-  while ((metadata_p == &head && metadata_p->next != NULL) || size_available(metadata_p, metadata_p->next) < size + sizeof(struct metadata))
+  while ((metadata_p == &head && metadata_p->next != NULL) || size_available(metadata_p, metadata_p->next) < size + sizeof(struct metadata)) {
     metadata_p = metadata_p->next;
+  }
 
   // address of the new metadata
   void *metadata_addr;
@@ -75,4 +85,9 @@ void *my_malloc(size_t size) {
   memcpy(metadata_addr, &md, sizeof(struct metadata));
 
   return md.data_addr;
+}
+
+// TODO: maybe align metadata somehow so we can find it consistenly without looping
+void my_free(void *ptr) {
+  struct metadata *mdp = get_metadata(ptr);
 }

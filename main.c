@@ -9,4 +9,8 @@ int main(int argc, char *argv[])
   memset(ptr2, 0, 10);
   void * ptr3 = my_malloc(10);
   memset(ptr3, 0, 10);
+
+  my_free(ptr1);
+  my_free(ptr2);
+  my_free(ptr3);
 }
