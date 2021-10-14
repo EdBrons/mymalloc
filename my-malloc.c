@@ -5,7 +5,8 @@
 
 #define MIN_ALLOCATION 1000
 
-struct metadata head;
+struct metadata Head;
+void *Heap_Top_Addr;
 
 struct metadata {
   // addr of the data segment
@@ -17,18 +18,19 @@ struct metadata {
   struct metadata *prev;
   // addr of the next metadata
   struct metadata *next;
-
-  // allocated segment length
-  size_t segment_len;
 };
+
+char* data_end_addr(struct metadata *mdp) {
+  return mdp->data_addr + mdp->data_len;
+}
 
 // TODO: account for byte alignment
 int size_available(struct metadata *mdp1, struct metadata *mdp2) {
-  return (char *)mdp2 - (char *)mdp1 - sizeof(struct metadata);
+  return (char *)mdp2 - data_end_addr(mdp1);
 }
 
 struct metadata *get_metadata(void *ptr) {
-  struct metadata *metadata_p = &head;
+  struct metadata *metadata_p = &Head;
   while (metadata_p->data_addr != ptr && metadata_p != NULL) {
     metadata_p = metadata_p->next;
   }
@@ -42,31 +44,41 @@ void *my_malloc(size_t size) {
   if (first_run_flag) {
     void *heap_bottom_addr = sbrk(0);
 
-    head.data_addr = heap_bottom_addr;
-    head.data_len = 0;
-    head.prev = NULL;
-    head.next = NULL;
+    Head.data_addr = heap_bottom_addr;
+    Head.data_len = 0;
+    Head.prev = NULL;
+    Head.next = NULL;
 
     intptr_t allocation = MIN_ALLOCATION > size ? MIN_ALLOCATION : size;
     allocation += 2 * sizeof(struct metadata);
 
-    void *heap_top_addr;
     // TODO: rework this error checking because perror might not work
     if (sbrk(allocation) == -1) {
       perror("malloc");
       return NULL;
     }
 
-    heap_top_addr = sbrk(0);
-    head.segment_len = heap_top_addr - heap_bottom_addr;
+    Heap_Top_Addr = sbrk(0);
 
     first_run_flag = 0;
   }
 
   // traverse list until suitable spot found
-  struct metadata *metadata_p = &head;
-  while ((metadata_p == &head && metadata_p->next != NULL) || size_available(metadata_p, metadata_p->next) < size + sizeof(struct metadata)) {
+  struct metadata *metadata_p = &Head;
+  while (metadata_p->next != NULL && size_available(metadata_p, metadata_p->next) < size + sizeof(struct metadata)) {
     metadata_p = metadata_p->next;
+  }
+
+
+  // check to see if we have enough space
+  int space_needed = size + sizeof(struct metadata) + 16;
+  if ((char *)Heap_Top_Addr - (space_needed + data_end_addr(metadata_p)) <= 0) {
+    int allocation = MIN_ALLOCATION > space_needed ? MIN_ALLOCATION : space_needed;
+    if (sbrk(allocation) == -1) {
+      perror("malloc");
+      return NULL;
+    }
+    Heap_Top_Addr = sbrk(0);
   }
 
   // address of the new metadata
@@ -80,7 +92,6 @@ void *my_malloc(size_t size) {
   md.data_len = size;
   md.prev = metadata_p;
   metadata_p->next = metadata_addr;
-  md.segment_len = 0;
 
   memcpy(metadata_addr, &md, sizeof(struct metadata));
 
@@ -99,4 +110,12 @@ void my_free(void *ptr) {
     mdp->next->prev = mdp->prev;
   }
   mdp->prev->next = mdp->next;
+}
+
+void *my_calloc(size_t nmemb, size_t size) {
+  return 0;
+}
+
+void *my_realloc(void *ptr, size_t size) {
+  return 0;
 }
