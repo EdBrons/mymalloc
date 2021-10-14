@@ -20,6 +20,7 @@ struct metadata {
   size_t segment_len;
 };
 
+// TODO: account for byte alignment
 int size_available(struct metadata *mdp1, struct metadata *mdp2) {
   return mdp1->data_addr - mdp2->data_addr - sizeof(struct metadata);
 }
