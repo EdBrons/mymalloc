@@ -14,9 +14,9 @@ struct metadata {
   size_t data_len;
 
   // addr of prev metadata
-  void *prev;
+  struct metadata *prev;
   // addr of the next metadata
-  void *next;
+  struct metadata *next;
 
   // allocated segment length
   size_t segment_len;
@@ -90,4 +90,13 @@ void *my_malloc(size_t size) {
 // TODO: maybe align metadata somehow so we can find it consistenly without looping
 void my_free(void *ptr) {
   struct metadata *mdp = get_metadata(ptr);
+  if (mdp == NULL) {
+    return;
+  }
+
+  // update linked list
+  if (mdp->next != NULL) {
+    mdp->next->prev = mdp->prev;
+  }
+  mdp->prev->next = mdp->next;
 }
