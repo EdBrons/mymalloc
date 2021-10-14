@@ -20,8 +20,8 @@ struct metadata {
   size_t segment_len;
 };
 
-int size_available(struct metadata *mdp1, struct metadata *mpd2) {
-  return 0;
+int size_available(struct metadata *mdp1, struct metadata *mdp2) {
+  return mdp1->data_addr - mdp2->data_addr - sizeof(struct metadata);
 }
 
 void *my_malloc(size_t size) {
