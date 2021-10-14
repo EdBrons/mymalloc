@@ -22,7 +22,7 @@ struct metadata {
 
 // TODO: account for byte alignment
 int size_available(struct metadata *mdp1, struct metadata *mdp2) {
-  return mdp1->data_addr - mdp2->data_addr - sizeof(struct metadata);
+  return (char *)mdp2 - (char *)mdp1 - sizeof(struct metadata);
 }
 
 void *my_malloc(size_t size) {
@@ -50,11 +50,13 @@ void *my_malloc(size_t size) {
 
     heap_top_addr = sbrk(0);
     head.segment_len = heap_top_addr - heap_bottom_addr;
+
+    first_run_flag = 0;
   }
 
   // traverse list until suitable spot found
   struct metadata *metadata_p = &head;
-  while (metadata_p->next != NULL && size_available(metadata_p, metadata_p->next) < size)
+  while ((metadata_p == &head && metadata_p->next != NULL) || size_available(metadata_p, metadata_p->next) < size + sizeof(struct metadata))
     metadata_p = metadata_p->next;
 
   // address of the new metadata
