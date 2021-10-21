@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <limits.h>
 
-#define MIN_ALLOCATION 1000
+#define MIN_ALLOCATION 10000
 
 struct metadata Head;
 void *Heap_Top_Addr;
@@ -40,7 +40,7 @@ struct metadata *get_metadata(void *ptr) {
   return metadata_p;
 }
 
-void *my_malloc(size_t size) {
+void *malloc(size_t size) {
   static int first_run_flag = 1;
 
   // if head not created, create it
@@ -102,7 +102,10 @@ void *my_malloc(size_t size) {
 }
 
 // TODO: maybe align metadata somehow so we can find it consistenly without looping
-void my_free(void *ptr) {
+void free(void *ptr) {
+  if (ptr == NULL) {
+    return;
+  }
   struct metadata *mdp = get_metadata(ptr);
   if (mdp == NULL) {
     return;
@@ -115,39 +118,43 @@ void my_free(void *ptr) {
   mdp->prev->next = mdp->next;
 }
 
-void *my_calloc(size_t nmemb, size_t size) {
+void *calloc(size_t nmemb, size_t size) {
   // check for overflow
   if (INT_MAX / nmemb < size) {
     // TODO: change out perror
-    fprintf(stderr, "my_calloc: integer overflow\n");
+    fprintf(stderr, "calloc: integer overflow\n");
     return NULL;
   }
 
-  void * ptr = my_malloc(nmemb * size);
+  void * ptr = malloc(nmemb * size);
   memset(ptr, 0, nmemb * size);
   return ptr;
 }
 
-void *my_realloc(void *ptr, size_t size) {
+void *realloc(void *ptr, size_t size) {
+  if (ptr == NULL) {
+    return NULL;
+  }
+
   struct metadata *mdp = get_metadata(ptr);
 
   if (mdp == NULL && size == 0) {
     return NULL;
   }
   else if (mdp == NULL && size != 0) {
-    return my_malloc(size);
+    return malloc(size);
   }
   else if (mdp != NULL && size == 0) {
-    my_free(ptr);
+    free(ptr);
     return NULL;
   }
   
   // TODO: this implemtation is slighly inefficent
-  void * new_ptr = my_malloc(size);
+  void * new_ptr = malloc(size);
   if (new_ptr == NULL) {
     return NULL;
   }
   memcpy(new_ptr, ptr, size);
-  my_free(ptr);
+  free(ptr);
   return new_ptr;
 }

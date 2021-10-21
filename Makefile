@@ -9,6 +9,10 @@ a.out: main.c my-malloc.so
 my-malloc.so: my-malloc.c
 	gcc $(CFLAGS) -rdynamic -shared -fPIC -o my-malloc.so my-malloc.c
 
+.PHONY:
+debug-ls:
+	gdb --args env LD_PRELOAD=./my-malloc.so ls
+
 .PHONY: clean
 clean:
 	rm -f my-malloc.so a.out
