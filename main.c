@@ -5,5 +5,9 @@
 
 int main(int argc, char *argv[])
 {
-  malloc(10000);
+    for (int a = 0; a < ALLOCATIONS; a++) {
+        if (malloc(1000) == NULL) {
+            return -1;
+        }
+    }
 }
