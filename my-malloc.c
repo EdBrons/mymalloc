@@ -26,6 +26,10 @@ char* data_end_addr(struct metadata *mdp) {
     return (char*)mdp->data_addr + mdp->data_len;
 }
 
+void *align(void * ptr) {
+    return (void *)(((unsigned long)ptr & 0xFFFFFFFFFFF0) + 16);
+}
+
 // TODO: account for byte alignment
 int size_available(struct metadata *mdp1, struct metadata *mdp2) {
     return (char *)mdp2 - data_end_addr(mdp1);
@@ -88,12 +92,11 @@ void *malloc(size_t size) {
 
     // address of the new metadata
     void *metadata_addr;
-    metadata_addr = metadata_p->data_addr + metadata_p->data_len;
+    metadata_addr = align(metadata_p->data_addr + metadata_p->data_len);
 
-    struct metadata md;
     // address of the data for this metadata
-    md.data_addr = ((unsigned long)metadata_addr + sizeof(struct metadata)) + 
-        ((unsigned long)((char*)metadata_addr + sizeof(struct metadata)) % 16);
+    struct metadata md;
+    md.data_addr = align((unsigned long)metadata_addr + sizeof(struct metadata));
     md.data_len = size;
 
     md.prev = metadata_p;
@@ -161,7 +164,7 @@ void *realloc(void *ptr, size_t size) {
     if (new_ptr == NULL) {
         return NULL;
     }
-    memcpy(new_ptr, ptr, size);
+    memcpy(new_ptr, ptr, mdp->data_len);
     free(ptr);
 
     return new_ptr;

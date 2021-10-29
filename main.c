@@ -6,7 +6,7 @@
 int main(int argc, char *argv[])
 {
     for (int a = 0; a < ALLOCATIONS; a++) {
-        if (malloc(1000) == NULL) {
+        if (malloc(100) == NULL) {
             return -1;
         }
     }

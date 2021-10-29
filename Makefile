@@ -10,8 +10,8 @@ my-malloc.so: my-malloc.c
 	gcc $(CFLAGS) -rdynamic -shared -fPIC -o my-malloc.so my-malloc.c
 
 .PHONY:
-debug-ls:
-	gdb --args env LD_PRELOAD=./my-malloc.so ls
+do-debug:
+	gdb --args env LD_PRELOAD=./my-malloc.so ls -l
 
 .PHONY: clean
 clean:
