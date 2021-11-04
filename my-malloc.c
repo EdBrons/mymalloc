@@ -33,11 +33,9 @@ char* data_end_addr(struct metadata *mdp) {
 }
 
 void *align(void * ptr) {
-    // return (void *)(((unsigned long)ptr & 0xFFFFFFFFFFF0) + 16);
-    return (void*)((intptr_t)ptr + (16 - ((intptr_t)ptr % 16)));
+    return (void*)((char *)ptr + (16 - ((unsigned long)ptr % 16)));
 }
 
-// TODO: account for byte alignment
 int size_available(struct metadata *mdp1, struct metadata *mdp2) {
     return (char *)mdp2 - data_end_addr(mdp1);
 }
@@ -68,9 +66,7 @@ void *malloc(size_t size) {
         intptr_t allocation = MIN_ALLOCATION > size ? MIN_ALLOCATION : size;
         allocation += 2 * sizeof(struct metadata);
 
-        // TODO: rework this error checking because perror might not work
         if ((ssize_t)sbrk(allocation) < 0) {
-            perror("malloc");
             return NULL;
         }
 
@@ -99,11 +95,11 @@ void *malloc(size_t size) {
 
     // address of the new metadata
     void *metadata_addr;
-    metadata_addr = align(metadata_p->data_addr + metadata_p->data_len);
+    metadata_addr = align((char*)metadata_p->data_addr + metadata_p->data_len);
 
     // address of the data for this metadata
     struct metadata md;
-    md.data_addr = align((unsigned long)metadata_addr + sizeof(struct metadata));
+    md.data_addr = align((char *)metadata_addr + sizeof(struct metadata));
     md.data_len = size;
 
     md.prev = metadata_p;
@@ -115,14 +111,13 @@ void *malloc(size_t size) {
 
     memcpy(metadata_addr, &md, sizeof(struct metadata));
 
-    if ((intptr_t)md.data_addr % 16 != 0) {
+    // if ((intptr_t)md.data_addr % 16 != 0) {
         // print_address(md.data_addr);
-    }
+    // }
 
     return md.data_addr;
 }
 
-// TODO: maybe align metadata somehow so we can find it consistenly without looping
 void free(void *ptr) {
     if (ptr == NULL) {
         return;
@@ -142,8 +137,6 @@ void free(void *ptr) {
 void *calloc(size_t nmemb, size_t size) {
     // check for overflow
     if (INT_MAX / nmemb < size) {
-        // TODO: change out perror
-        fprintf(stderr, "calloc: integer overflow\n");
         return NULL;
     }
 
@@ -170,12 +163,11 @@ void *realloc(void *ptr, size_t size) {
         return NULL;
     }
 
-    // TODO: this implemtation is slighly inefficent
     void * new_ptr = malloc(size);
     if (new_ptr == NULL) {
         return NULL;
     }
-    memcpy(new_ptr, ptr, mdp->data_len);
+    memcpy(new_ptr, ptr, mdp->data_len > size ? size : mdp->data_len);
     free(ptr);
 
     return new_ptr;

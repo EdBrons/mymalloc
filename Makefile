@@ -11,7 +11,7 @@ my-malloc.so: my-malloc.c
 
 .PHONY:
 do-debug:
-	gdb --args env LD_PRELOAD=./my-malloc.so ls -l
+	gdb --args env LD_PRELOAD=./my-malloc.so vim
 
 .PHONY: clean
 clean:
