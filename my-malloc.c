@@ -27,7 +27,8 @@ char* data_end_addr(struct metadata *mdp) {
 }
 
 void *align(void * ptr) {
-    return (void *)(((unsigned long)ptr & 0xFFFFFFFFFFF0) + 16);
+    // return (void *)(((unsigned long)ptr & 0xFFFFFFFFFFF0) + 16);
+    return ptr;
 }
 
 // TODO: account for byte alignment
