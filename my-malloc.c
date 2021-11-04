@@ -10,6 +10,12 @@ struct metadata Head;
 struct metadata Tail;
 void *Heap_Top_Addr;
 
+void print_address(void *p) {
+    char buf[100];
+    sprintf(buf, "%p\n", p);
+    write(1, buf, strlen(buf));
+}
+
 struct metadata {
     // addr of the data segment
     void *data_addr;
@@ -28,7 +34,7 @@ char* data_end_addr(struct metadata *mdp) {
 
 void *align(void * ptr) {
     // return (void *)(((unsigned long)ptr & 0xFFFFFFFFFFF0) + 16);
-    return ptr;
+    return (void*)((intptr_t)ptr + (16 - ((intptr_t)ptr % 16)));
 }
 
 // TODO: account for byte alignment
@@ -75,13 +81,13 @@ void *malloc(size_t size) {
 
     // traverse list until suitable spot found
     struct metadata *metadata_p = &Head;
-    while (metadata_p->next != NULL && size_available(metadata_p, metadata_p->next) < size + sizeof(struct metadata)) {
+    while (metadata_p->next != NULL && size_available(metadata_p, metadata_p->next) < size + sizeof(struct metadata) + 32) {
         metadata_p = metadata_p->next;
     }
 
 
     // check to see if we have enough space
-    int space_needed = size + sizeof(struct metadata) + 16;
+    int space_needed = size + sizeof(struct metadata) + 32;
     if ((char *)Heap_Top_Addr - (space_needed + data_end_addr(metadata_p)) <= 0) {
         int allocation = MIN_ALLOCATION > space_needed ? MIN_ALLOCATION : space_needed;
         if ((ssize_t)sbrk(allocation) < 0) {
@@ -108,6 +114,10 @@ void *malloc(size_t size) {
     metadata_p->next = metadata_addr;
 
     memcpy(metadata_addr, &md, sizeof(struct metadata));
+
+    if ((intptr_t)md.data_addr % 16 != 0) {
+        // print_address(md.data_addr);
+    }
 
     return md.data_addr;
 }
