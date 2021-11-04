@@ -126,10 +126,16 @@ void free(void *ptr) {
     if (ptr == NULL) {
         return;
     }
-    struct metadata *mdp = get_metadata(ptr);
-    if (mdp == NULL) {
-        return;
-    }
+
+    struct metadata *mdp = (struct metadata *)((char* )ptr - 0x30);
+
+    /*
+    write(1, "PTR:\n", 5);
+    print_address(ptr);
+    write(1, "MDP:\n", 5);
+    print_address((void*)mdp);
+    write(1, "\n", 1);
+    */
 
     // update linked list
     if (mdp->next != NULL) {
