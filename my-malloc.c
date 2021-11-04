@@ -52,6 +52,10 @@ struct metadata *get_metadata(void *ptr) {
 }
 
 void *malloc(size_t size) {
+    if (size == 0) {
+        return NULL;
+    }
+
     static int first_run_flag = 1;
 
     // if head not created, create it
@@ -135,7 +139,10 @@ void free(void *ptr) {
 }
 
 void *calloc(size_t nmemb, size_t size) {
-    // check for overflow
+    if (nmemb == 0 || size == 0) {
+        return NULL;
+    }
+
     if (INT_MAX / nmemb < size) {
         return NULL;
     }
@@ -152,13 +159,10 @@ void *realloc(void *ptr, size_t size) {
 
     struct metadata *mdp = get_metadata(ptr);
 
-    if (mdp == NULL && size == 0) {
+    if (mdp == NULL) {
         return NULL;
     }
-    else if (mdp == NULL && size != 0) {
-        return malloc(size);
-    }
-    else if (mdp != NULL && size == 0) {
+    else if (size == 0) {
         free(ptr);
         return NULL;
     }
