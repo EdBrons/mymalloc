@@ -2,7 +2,8 @@
 #include <string.h>
 
 #define ALLOCATIONS 200
-
+/* The main function can also be used to test 
+   that malloc does the correct memory allocation */
 int main(int argc, char *argv[])
 {
     void *ptrs[ALLOCATIONS];
