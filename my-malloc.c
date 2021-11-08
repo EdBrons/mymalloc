@@ -182,3 +182,11 @@ void *realloc(void *ptr, size_t size) {
 
     return new_ptr;
 }
+
+size_t malloc_usable_size(void *ptr) {
+    struct metadata *mdp = get_metadata(ptr);
+    if (mdp == NULL) {
+        return 0;
+    }
+    return mdp->data_len;
+}
