@@ -18,28 +18,30 @@ void print_address(void *p) {
     write(1, buf, strlen(buf));
 }
 
-struct metadata {
-    // addr of the data segment
-    void *data_addr;
-    // len of the data segment
-    size_t data_len;
 
-    // addr of prev metadata
+struct metadata {
+    void *data_addr; /* address of the data */
+    size_t data_len; /* length of the data */
     struct metadata *prev;
-    // addr of the next metadata
     struct metadata *next;
 };
+
  /*This function takes a pointer to the head of a metadata and 
    returns its last address after adding the length of its data*/
+
+
 char* data_end_addr(struct metadata *mdp) {
     return (char*)mdp->data_addr + mdp->data_len;
 }
 
+
  /*This function takes a pointer to an address as input and returns
   a pointer to an address that is 16-bit aligned  */
+
 void *align(void * ptr) {
     return (void*)((char *)ptr + (16 - ((unsigned long)ptr % 16)));
 }
+
 
 /* This function takes two adjacent metadata in the linked list and calculate the
    space that is free between them  */
@@ -50,6 +52,7 @@ int size_available(struct metadata *mdp1, struct metadata *mdp2) {
    for that pointer in the linked list and returns the address of the 
     metadata stored at that pointer if found, it returns NULL if the address
     is not found in the linked list  */
+
 struct metadata *get_metadata(void *ptr) {
     struct metadata *metadata_p = &Head;
     while (metadata_p != NULL) { // traverse the linked list till we find the address
@@ -106,8 +109,13 @@ void *malloc(size_t size) {
     int space_needed = size + sizeof(struct metadata) + 32;
     if ((char *)Heap_Top_Addr - (space_needed + data_end_addr(metadata_p)) <= 0) {
         int allocation = MIN_ALLOCATION > space_needed ? MIN_ALLOCATION : space_needed;
+
         if ((ssize_t)sbrk(allocation) < 0) { // use sbrk to a grab more memory (allocation)
             perror("malloc");
+
+        // if sbrk returns -1, we ran out of memory
+        if ((ssize_t)sbrk(allocation) < 0) {
+
             return NULL;
         }
         Heap_Top_Addr = sbrk(0); /*update the top of the heap */
@@ -144,14 +152,6 @@ void free(void *ptr) {
 
     struct metadata *mdp = (struct metadata *)((char* )ptr - 0x30);
 
-    /*
-    write(1, "PTR:\n", 5);
-    print_address(ptr);
-    write(1, "MDP:\n", 5);
-    print_address((void*)mdp);
-    write(1, "\n", 1);
-    */
-
     // update linked list
     if (mdp->next != NULL) {
         mdp->next->prev = mdp->prev;
@@ -165,6 +165,7 @@ void *calloc(size_t nmemb, size_t size) {
         return NULL;
     }
 
+    // check for overflow
     if (INT_MAX / nmemb < size) {
         return NULL;
     }
@@ -192,12 +193,22 @@ void *realloc(void *ptr, size_t size) {
         return NULL;
     }
 
+    // realloc the ptr
     void * new_ptr = malloc(size);
     if (new_ptr == NULL) {
         return NULL;
     }
+    // check for bounds
     memcpy(new_ptr, ptr, mdp->data_len > size ? size : mdp->data_len);
     free(ptr);
 
     return new_ptr;
+}
+
+size_t malloc_usable_size(void *ptr) {
+    struct metadata *mdp = get_metadata(ptr);
+    if (mdp == NULL) {
+        return 0;
+    }
+    return mdp->data_len;
 }
