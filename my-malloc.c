@@ -112,6 +112,7 @@ void *malloc(size_t size) {
 
         if ((ssize_t)sbrk(allocation) < 0) { // use sbrk to a grab more memory (allocation)
             perror("malloc");
+        }
 
         // if sbrk returns -1, we ran out of memory
         if ((ssize_t)sbrk(allocation) < 0) {
