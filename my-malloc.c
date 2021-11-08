@@ -16,18 +16,22 @@ struct metadata {
     struct metadata *next;
 };
 
+// gets the end of the data segment
 char* data_end_addr(struct metadata *mdp) {
     return (char*)mdp->data_addr + mdp->data_len;
 }
 
+// returns the ptr passed aligned to 16 bytes.
 void *align(void * ptr) {
     return (void*)((char *)ptr + (16 - ((unsigned long)ptr % 16)));
 }
 
+// returns the size available for a allocation between two metadata chunks
 int size_available(struct metadata *mdp1, struct metadata *mdp2) {
     return (char *)mdp2 - data_end_addr(mdp1);
 }
 
+// gets the metadata struct corresponding to ptr from the linked list
 struct metadata *get_metadata(void *ptr) {
     struct metadata *metadata_p = &Head;
     while (metadata_p != NULL) {
@@ -78,8 +82,8 @@ void *malloc(size_t size) {
     int space_needed = size + sizeof(struct metadata) + 32;
     if ((char *)Heap_Top_Addr - (space_needed + data_end_addr(metadata_p)) <= 0) {
         int allocation = MIN_ALLOCATION > space_needed ? MIN_ALLOCATION : space_needed;
+        // if sbrk returns -1, we ran out of memory
         if ((ssize_t)sbrk(allocation) < 0) {
-            perror("malloc");
             return NULL;
         }
         Heap_Top_Addr = sbrk(0);
@@ -103,10 +107,6 @@ void *malloc(size_t size) {
 
     memcpy(metadata_addr, &md, sizeof(struct metadata));
 
-    // if ((intptr_t)md.data_addr % 16 != 0) {
-        // print_address(md.data_addr);
-    // }
-
     return md.data_addr;
 }
 
@@ -129,6 +129,7 @@ void *calloc(size_t nmemb, size_t size) {
         return NULL;
     }
 
+    // check for overflow
     if (INT_MAX / nmemb < size) {
         return NULL;
     }
@@ -153,10 +154,12 @@ void *realloc(void *ptr, size_t size) {
         return NULL;
     }
 
+    // realloc the ptr
     void * new_ptr = malloc(size);
     if (new_ptr == NULL) {
         return NULL;
     }
+    // check for bounds
     memcpy(new_ptr, ptr, mdp->data_len > size ? size : mdp->data_len);
     free(ptr);
 
