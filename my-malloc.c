@@ -7,24 +7,12 @@
 #define MIN_ALLOCATION 10000
 
 struct metadata Head;
-struct metadata Tail;
 void *Heap_Top_Addr;
 
-void print_address(void *p) {
-    char buf[100];
-    sprintf(buf, "%p\n", p);
-    write(1, buf, strlen(buf));
-}
-
 struct metadata {
-    // addr of the data segment
-    void *data_addr;
-    // len of the data segment
-    size_t data_len;
-
-    // addr of prev metadata
+    void *data_addr; /* address of the data */
+    size_t data_len; /* length of the data */
     struct metadata *prev;
-    // addr of the next metadata
     struct metadata *next;
 };
 
@@ -128,14 +116,6 @@ void free(void *ptr) {
     }
 
     struct metadata *mdp = (struct metadata *)((char* )ptr - 0x30);
-
-    /*
-    write(1, "PTR:\n", 5);
-    print_address(ptr);
-    write(1, "MDP:\n", 5);
-    print_address((void*)mdp);
-    write(1, "\n", 1);
-    */
 
     // update linked list
     if (mdp->next != NULL) {
