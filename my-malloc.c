@@ -7,17 +7,7 @@
 #define MIN_ALLOCATION 10000
 
 struct metadata Head; /*Keep track of the head of the linked list for all memory in use */
-struct metadata Tail; /* Keep track of the end of allocated memory for the linked list*/
 void *Heap_Top_Addr;  /* Keep track of the top of the heap (the boundary of used and unused memory) */
-
-/* Code for debugging the data strucure (correct alignment and allocation of memory) 
-   It takes a memory address pointer and prints the address */
-void print_address(void *p) {
-    char buf[100];
-    sprintf(buf, "%p\n", p);
-    write(1, buf, strlen(buf));
-}
-
 
 struct metadata {
     void *data_addr; /* address of the data */
@@ -28,8 +18,6 @@ struct metadata {
 
  /*This function takes a pointer to the head of a metadata and 
    returns its last address after adding the length of its data*/
-
-
 char* data_end_addr(struct metadata *mdp) {
     return (char*)mdp->data_addr + mdp->data_len;
 }
@@ -37,7 +25,6 @@ char* data_end_addr(struct metadata *mdp) {
 
  /*This function takes a pointer to an address as input and returns
   a pointer to an address that is 16-bit aligned  */
-
 void *align(void * ptr) {
     return (void*)((char *)ptr + (16 - ((unsigned long)ptr % 16)));
 }
@@ -48,11 +35,11 @@ void *align(void * ptr) {
 int size_available(struct metadata *mdp1, struct metadata *mdp2) {
     return (char *)mdp2 - data_end_addr(mdp1);
 }
+
 /* This function takes a pointer to an address as input, searches
    for that pointer in the linked list and returns the address of the 
     metadata stored at that pointer if found, it returns NULL if the address
     is not found in the linked list  */
-
 struct metadata *get_metadata(void *ptr) {
     struct metadata *metadata_p = &Head;
     while (metadata_p != NULL) { // traverse the linked list till we find the address
@@ -206,6 +193,8 @@ void *realloc(void *ptr, size_t size) {
     return new_ptr;
 }
 
+/* returns the amount of space allocated to ptr
+ * if ptr is invalid NULL is returned */
 size_t malloc_usable_size(void *ptr) {
     struct metadata *mdp = get_metadata(ptr);
     if (mdp == NULL) {
